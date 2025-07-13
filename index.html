@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រព័ន្ធគ្រប់គ្រងបុគ្គលិក</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            padding: 2rem;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for small screens */
+        }
+        table {
+            min-width: 700px; /* Ensure table doesn't shrink too much */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-6xl w-full bg-white shadow-lg rounded-xl p-8 space-y-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 text-center flex-grow">
+                ប្រព័ន្ធគ្រប់គ្រងបុគ្គលិក
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span id="loggedInUser" class="text-gray-600 text-sm"></span>
+                <!-- New button for Employee KPI Report -->
+                <button
+                    id="kpiReportBtn"
+                    class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out hidden"
+                >
+                    របាយការណ៍ KPI របស់ខ្ញុំ
+                </button>
+                <!-- New button for IT to create user accounts -->
+                <button
+                    id="createUserAccountBtn"
+                    class="py-2 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 ease-in-out hidden"
+                >
+                    បង្កើតគណនីអ្នកប្រើប្រាស់
+                </button>
+                <!-- New button for HR to view daily KPI reports -->
+                <button
+                    id="viewDailyKpiReportsBtn"
+                    class="py-2 px-4 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition duration-150 ease-in-out hidden"
+                >
+                    មើលរបាយការណ៍ KPI ប្រចាំថ្ងៃ
+                </button>
+                <button
+                    id="logoutBtn"
+                    class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out"
+                >
+                    ចេញពីប្រព័ន្ធ
+                </button>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-700">
+                បញ្ជីបុគ្គលិក
+            </h2>
+            <!-- Add Employee Button - Visible only to Manager/HR -->
+            <button
+                id="addEmployeeBtn"
+                class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out hidden"
+            >
+                បន្ថែមបុគ្គលិក
+            </button>
+        </div>
+
+        <div id="employeeListContainer" class="table-container">
+            <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ឈ្មោះ
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            តួនាទី
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            នាយកដ្ឋាន
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ទំនាក់ទំនង
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            ប្រាក់ខែ
+                        </th>
+                        <th id="actionsHeader" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden">
+                            សកម្មភាព
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="employeeTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Employee rows will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loadingMessage" class="hidden text-center text-gray-500 mt-4">
+            កំពុងផ្ទុកបញ្ជីបុគ្គលិក...
+        </div>
+        <!-- Error state -->
+        <div id="errorMessage" class="hidden text-center text-red-500 mt-4">
+            មិនអាចផ្ទុកបញ្ជីបុគ្គលិកបានទេ។
+        </div>
+        <!-- Access Denied Message -->
+        <div id="accessDeniedMessage" class="hidden text-center text-red-600 mt-4 text-lg font-semibold">
+            អ្នកមិនមានសិទ្ធិចូលមើលបញ្ជីបុគ្គលិកនេះទេ។
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts and Confirmations -->
+    <div id="customModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-800 mb-4"></h3>
+            <div id="modalContent" class="prose max-w-none text-gray-700 leading-relaxed mb-6"></div>
+            <div class="flex justify-end space-x-2">
+                <button id="modalConfirmBtn" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out hidden">យល់ព្រម</button>
+                <button id="modalCloseBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">បិទ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Form Modal (Add/Edit) -->
+    <div id="employeeFormModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
+            <h3 id="employeeFormModalTitle" class="text-xl font-bold text-gray-800 mb-4"></h3>
+            <form id="employeeForm" class="space-y-4">
+                <input type="hidden" id="employeeFormId">
+                <div>
+                    <label for="employeeFormName" class="block text-sm font-medium text-gray-700 mb-1">
+                        ឈ្មោះ:
+                    </label>
+                    <input type="text" id="employeeFormName" name="name" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="employeeFormPosition" class="block text-sm font-medium text-gray-700 mb-1">
+                        តួនាទី:
+                    </label>
+                    <input type="text" id="employeeFormPosition" name="position" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="employeeFormDepartment" class="block text-sm font-medium text-gray-700 mb-1">
+                        នាយកដ្ឋាន:
+                    </label>
+                    <input type="text" id="employeeFormDepartment" name="department" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="employeeFormContact" class="block text-sm font-medium text-gray-700 mb-1">
+                        ទំនាក់ទំនង:
+                    </label>
+                    <input type="text" id="employeeFormContact" name="contact" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="employeeFormSalary" class="block text-sm font-medium text-gray-700 mb-1">
+                        ប្រាក់ខែ:
+                    </label>
+                    <input type="text" id="employeeFormSalary" name="salary"
+                              class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="បញ្ចូលប្រាក់ខែ">
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancelEmployeeFormBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">បោះបង់</button>
+                    <button type="submit" id="saveEmployeeBtn" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">រក្សាទុក</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const employeeTableBody = document.getElementById('employeeTableBody');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const accessDeniedMessage = document.getElementById('accessDeniedMessage');
+            const employeeListContainer = document.getElementById('employeeListContainer');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loggedInUserSpan = document.getElementById('loggedInUser');
+            const kpiReportBtn = document.getElementById('kpiReportBtn');
+            const addEmployeeBtn = document.getElementById('addEmployeeBtn');
+            const actionsHeader = document.getElementById('actionsHeader');
+            const createUserAccountBtn = document.getElementById('createUserAccountBtn');
+            const viewDailyKpiReportsBtn = document.getElementById('viewDailyKpiReportsBtn'); // New button for HR
+
+            // Custom Modal Elements (for alerts/confirmations)
+            const customModal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            // Employee Form Modal Elements
+            const employeeFormModal = document.getElementById('employeeFormModal');
+            const employeeFormModalTitle = document.getElementById('employeeFormModalTitle');
+            const employeeForm = document.getElementById('employeeForm');
+            const employeeFormId = document.getElementById('employeeFormId');
+            const employeeFormName = document.getElementById('employeeFormName');
+            const employeeFormPosition = document.getElementById('employeeFormPosition');
+            const employeeFormDepartment = document.getElementById('employeeFormDepartment');
+            const employeeFormContact = document.getElementById('employeeFormContact');
+            const employeeFormSalary = document.getElementById('employeeFormSalary');
+            const cancelEmployeeFormBtn = document.getElementById('cancelEmployeeFormBtn');
+            const saveEmployeeBtn = document.getElementById('saveEmployeeBtn');
+
+            let currentConfirmCallback = null;
+            let currentUserRole = '';
+
+            const PHP_BASE_URL = 'http://localhost/employee_app/php/';
+
+            // Function to show custom alert modal
+            function showAlert(title, message) {
+                modalTitle.textContent = title;
+                modalContent.innerHTML = message;
+                modalConfirmBtn.classList.add('hidden');
+                modalCloseBtn.textContent = 'បិទ';
+                customModal.classList.remove('hidden');
+            }
+
+            // Function to show custom confirmation modal
+            function showConfirm(title, message, onConfirmCallback) {
+                modalTitle.textContent = title;
+                modalContent.innerHTML = message;
+                modalConfirmBtn.classList.remove('hidden');
+                modalCloseBtn.textContent = 'បោះបង់';
+                currentConfirmCallback = onConfirmCallback;
+                customModal.classList.remove('hidden');
+            }
+
+            // Event listener for modal close button
+            modalCloseBtn.addEventListener('click', () => {
+                customModal.classList.add('hidden');
+                currentConfirmCallback = null;
+            });
+
+            // Event listener for modal confirm button
+            modalConfirmBtn.addEventListener('click', () => {
+                customModal.classList.add('hidden');
+                if (currentConfirmCallback) {
+                    currentConfirmCallback();
+                    currentConfirmCallback = null;
+                }
+            });
+
+            // --- Employee Form Modal Functions ---
+            function showEmployeeFormModal(title, employeeData = {}) {
+                employeeFormModalTitle.textContent = title;
+                employeeFormId.value = employeeData.id || '';
+                employeeFormName.value = employeeData.name || '';
+                employeeFormPosition.value = employeeData.position || '';
+                employeeFormDepartment.value = employeeData.department || '';
+                employeeFormContact.value = employeeData.contact || '';
+                employeeFormSalary.value = employeeData.salary || '';
+                employeeFormModal.classList.remove('hidden');
+            }
+
+            function hideEmployeeFormModal() {
+                employeeFormModal.classList.add('hidden');
+                employeeForm.reset(); // Clear the form
+            }
+
+            cancelEmployeeFormBtn.addEventListener('click', hideEmployeeFormModal);
+
+            employeeForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const id = employeeFormId.value;
+                const name = employeeFormName.value;
+                const position = employeeFormPosition.value;
+                const department = employeeFormDepartment.value;
+                const contact = employeeFormContact.value;
+                const salary = employeeFormSalary.value;
+
+                const employeeData = { id, name, position, department, contact, salary };
+
+                saveEmployeeBtn.disabled = true;
+                saveEmployeeBtn.textContent = 'កំពុងរក្សាទុក...';
+
+                try {
+                    let url = '';
+                    let method = '';
+
+                    if (id) { // If ID exists, it's an update
+                        url = `${PHP_BASE_URL}update_employee.php`;
+                        method = 'POST';
+                    } else { // No ID, it's a new employee
+                        url = `${PHP_BASE_URL}add_employee.php`;
+                        method = 'POST';
+                    }
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(employeeData)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('HTTP Error saving employee:', response.status, response.statusText, errorText);
+                        showAlert('កំហុស', `មានបញ្ហាក្នុងការរក្សាទុកបុគ្គលិក។ HTTP Error: ${response.status} ${response.statusText}`);
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showAlert('ជោគជ័យ', data.message);
+                        hideEmployeeFormModal();
+                        fetchEmployees(); // Refresh the list
+                    } else {
+                        showAlert('កំហុស', data.message || 'មិនអាចរក្សាទុកបុគ្គលិកបានទេ។');
+                    }
+                } catch (error) {
+                    console.error('Error saving employee (network or parsing):', error);
+                    showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។`);
+                } finally {
+                    saveEmployeeBtn.disabled = false;
+                    saveEmployeeBtn.textContent = 'រក្សាទុក';
+                }
+            });
+
+            // --- Employee Deletion Logic ---
+            const deleteEmployee = async (employeeId) => {
+                showConfirm('បញ្ជាក់ការលុប', 'តើអ្នកពិតជាចង់លុបបុគ្គលិកនេះមែនទេ? ការលុបនេះមិនអាចយកមកវិញបានទេ។', async () => {
+                    try {
+                        const response = await fetch(`${PHP_BASE_URL}delete_employee.php`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: employeeId })
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('HTTP Error deleting employee:', response.status, response.statusText, errorText);
+                            showAlert('កំហុស', `មានបញ្ហាក្នុងការលុបបុគ្គលិក។ HTTP Error: ${response.status} ${response.statusText}`);
+                            return;
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showAlert('ជោគជ័យ', data.message);
+                            fetchEmployees(); // Refresh the list
+                        } else {
+                            showAlert('កំហុស', data.message || 'មិនអាចលុបបុគ្គលិកបានទេ។');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting employee (network or parsing):', error);
+                        showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។`);
+                    }
+                });
+            };
+
+            // --- Authentication and Data Fetching Logic ---
+            const fetchEmployees = async () => {
+                loadingMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                accessDeniedMessage.classList.add('hidden');
+                employeeListContainer.classList.add('hidden');
+                kpiReportBtn.classList.add('hidden');
+                addEmployeeBtn.classList.add('hidden');
+                actionsHeader.classList.add('hidden');
+                createUserAccountBtn.classList.add('hidden');
+                viewDailyKpiReportsBtn.classList.add('hidden'); // Hide HR KPI button by default
+
+                try {
+                    const authResponse = await fetch(`${PHP_BASE_URL}check_auth.php`);
+                    const authData = await authResponse.json();
+
+                    if (!authData.authenticated) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    loggedInUserSpan.textContent = `អ្នកប្រើប្រាស់: ${authData.username} (${authData.role})`;
+                    currentUserRole = authData.role;
+
+                    // Show KPI Report button if the user is an 'employee' or 'terminal operation'
+                    if (currentUserRole === 'employee' || currentUserRole === 'terminal operation') {
+                        kpiReportBtn.classList.remove('hidden');
+                    }
+
+                    // Show Create User Account button if the user is 'IT'
+                    if (currentUserRole === 'IT') {
+                        createUserAccountBtn.classList.remove('hidden');
+                    }
+
+                    // Show View Daily KPI Reports button if the user is 'HR'
+                    if (currentUserRole === 'hr') {
+                        viewDailyKpiReportsBtn.classList.remove('hidden');
+                    }
+
+                    // Check user role for access to this page (Employee List)
+                    if (currentUserRole !== 'manager' && currentUserRole !== 'hr' && currentUserRole !== 'IT') {
+                        accessDeniedMessage.classList.remove('hidden');
+                        loadingMessage.classList.add('hidden');
+                        return;
+                    }
+
+                    // If authorized, proceed to fetch employee data
+                    const response = await fetch(`${PHP_BASE_URL}get_employees.php`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        employeeTableBody.innerHTML = '';
+                        if (data.employees.length > 0) {
+                            data.employees.forEach(employee => {
+                                const row = `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${employee.name}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${employee.position}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${employee.department}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${employee.contact}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${employee.salary || 'N/A'}</td>
+                                        ${(currentUserRole === 'manager' || currentUserRole === 'hr') ?
+                                            `<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button class="text-indigo-600 hover:text-indigo-900 mr-2 edit-btn" data-id="${employee.id}"
+                                                        data-name="${employee.name}" data-position="${employee.position}"
+                                                        data-department="${employee.department}" data-contact="${employee.contact}"
+                                                        data-salary="${employee.salary || ''}">
+                                                    កែប្រែ
+                                                </button>
+                                                <button class="text-red-600 hover:text-red-900 delete-btn" data-id="${employee.id}">
+                                                    លុប
+                                                </button>
+                                            </td>` : ''
+                                        }
+                                    </tr>
+                                `;
+                                employeeTableBody.innerHTML += row;
+                            });
+
+                            // Add event listeners for edit and delete buttons after rows are added
+                            if (currentUserRole === 'manager' || currentUserRole === 'hr') {
+                                document.querySelectorAll('.edit-btn').forEach(button => {
+                                    button.addEventListener('click', (e) => {
+                                        const employeeData = {
+                                            id: e.target.dataset.id,
+                                            name: e.target.dataset.name,
+                                            position: e.target.dataset.position,
+                                            department: e.target.dataset.department,
+                                            contact: e.target.dataset.contact,
+                                            salary: e.target.dataset.salary
+                                        };
+                                        showEmployeeFormModal('កែប្រែព័ត៌មានបុគ្គលិក', employeeData);
+                                    });
+                                });
+
+                                document.querySelectorAll('.delete-btn').forEach(button => {
+                                    button.addEventListener('click', (e) => {
+                                        const employeeId = e.target.dataset.id;
+                                        deleteEmployee(employeeId);
+                                    });
+                                });
+                            }
+                            employeeListContainer.classList.remove('hidden');
+                        } else {
+                            employeeTableBody.innerHTML = `<tr><td colspan="${(currentUserRole === 'manager' || currentUserRole === 'hr') ? 6 : 5}" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">មិនមានបុគ្គលិកត្រូវបានរកឃើញទេ។</td></tr>`;
+                            employeeListContainer.classList.remove('hidden');
+                        }
+                    } else {
+                        showAlert('កំហុសផ្ទុកទិន្នន័យ', data.message || 'មិនអាចផ្ទុកបញ្ជីបុគ្គលិកបានទេ។');
+                        errorMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error fetching employees:', error);
+                    showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។ សូមពិនិត្យមើល WampServer របស់អ្នក។`);
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    loadingMessage.classList.add('hidden');
+                }
+            };
+
+            const handleLogout = async () => {
+                showConfirm('បញ្ជាក់ការចេញពីប្រព័ន្ធ', 'តើអ្នកពិតជាចង់ចេញពីប្រព័ន្ធមែនទេ?', async () => {
+                    try {
+                        const response = await fetch(`${PHP_BASE_URL}logout.php`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            window.location.href = 'login.html';
+                        } else {
+                            showAlert('កំហុសការចេញពីប្រព័ន្ធ', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error during logout:', error);
+                        showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញពេលចេញពីប្រព័ន្ធ: ${error.message}`);
+                    }
+                });
+            };
+
+            // Event Listeners
+            logoutBtn.addEventListener('click', handleLogout);
+            kpiReportBtn.addEventListener('click', () => {
+                window.location.href = 'staff_kpi_report.html';
+            });
+            addEmployeeBtn.addEventListener('click', () => {
+                showEmployeeFormModal('បន្ថែមបុគ្គលិកថ្មី');
+            });
+            createUserAccountBtn.addEventListener('click', () => {
+                window.location.href = 'create_employee_user.html';
+            });
+            viewDailyKpiReportsBtn.addEventListener('click', () => { // New event listener for HR KPI button
+                window.location.href = 'hr_daily_kpi_reports.html';
+            });
+
+            // Initial fetch of employees when the page loads
+            fetchEmployees();
+        });
+    </script>
+</body>
+</html>

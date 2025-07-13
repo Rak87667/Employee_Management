@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>របាយការណ៍ KPI ប្រចាំថ្ងៃរបស់ HR</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            padding: 2rem;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            min-width: 700px; /* Adjusted min-width as fewer columns */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-4xl w-full bg-white shadow-lg rounded-xl p-8 space-y-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 text-center flex-grow">
+                របាយការណ៍ KPI សរុបរបស់បុគ្គលិក
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span id="loggedInUser" class="text-gray-600 text-sm"></span>
+                <button
+                    id="logoutBtn"
+                    class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out"
+                >
+                    ចេញពីប្រព័ន្ធ
+                </button>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">
+            បញ្ជីពិន្ទុ KPI សរុប
+        </h2>
+
+        <div id="reportsListContainer" class="table-container">
+            <div class="text-center text-gray-500">កំពុងផ្ទុករបាយការណ៍...</div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loadingMessage" class="hidden text-center text-gray-500 mt-4">
+            កំពុងផ្ទុករបាយការណ៍...
+        </div>
+        <!-- Error state -->
+        <div id="errorMessage" class="hidden text-center text-red-500 mt-4">
+            មិនអាចផ្ទុករបាយការណ៍ KPI បានទេ។
+        </div>
+        <!-- Access Denied Message -->
+        <div id="accessDeniedMessage" class="hidden text-center text-red-600 mt-4 text-lg font-semibold">
+            អ្នកមិនមានសិទ្ធិចូលមើលទំព័រនេះទេ។
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="customModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-800 mb-4"></h3>
+            <div id="modalContent" class="prose max-w-none text-gray-700 leading-relaxed mb-6"></div>
+            <div class="flex justify-end space-x-2">
+                <button id="modalCloseBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">បិទ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const reportsListContainer = document.getElementById('reportsListContainer');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const accessDeniedMessage = document.getElementById('accessDeniedMessage');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loggedInUserSpan = document.getElementById('loggedInUser');
+
+            // Custom Modal Elements
+            const customModal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            const PHP_BASE_URL = 'http://localhost/employee_app/php/';
+
+            // Function to show custom alert modal
+            function showAlert(title, message) {
+                modalTitle.textContent = title;
+                modalContent.innerHTML = message;
+                customModal.classList.remove('hidden');
+            }
+
+            // Event listener for modal close button
+            modalCloseBtn.addEventListener('click', () => {
+                customModal.classList.add('hidden');
+            });
+
+            // Function to fetch and display KPI reports
+            const fetchKpiReports = async () => {
+                loadingMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                reportsListContainer.classList.add('hidden'); // Hide table initially
+                accessDeniedMessage.classList.add('hidden');
+
+                try {
+                    const authResponse = await fetch(`${PHP_BASE_URL}check_auth.php`);
+                    const authData = await authResponse.json();
+
+                    if (!authData.authenticated) {
+                        window.location.href = 'login.html'; // Redirect to login if not authenticated
+                        return;
+                    }
+
+                    loggedInUserSpan.textContent = `អ្នកប្រើប្រាស់: ${authData.username} (${authData.role})`;
+                    const currentUserRole = authData.role;
+
+                    // Convert currentUserRole to lowercase for case-insensitive comparison
+                    if (currentUserRole.toLowerCase() !== 'hr') {
+                        accessDeniedMessage.classList.remove('hidden'); // Show access denied message
+                        loadingMessage.classList.add('hidden');
+                        return; // Stop execution
+                    }
+
+                    const response = await fetch(`${PHP_BASE_URL}get_daily_kpi_reports.php`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        renderKpiReports(data.reports);
+                        reportsListContainer.classList.remove('hidden'); // Show table
+                    } else {
+                        showAlert('កំហុសផ្ទុកទិន្នន័យ', data.message || 'មិនអាចផ្ទុករបាយការណ៍ KPI បានទេ។');
+                        errorMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error fetching KPI reports:', error);
+                    showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។ សូមពិនិត្យមើល WampServer របស់អ្នក។`);
+                    errorMessage.classList.remove('hidden');
+                } finally {
+                    loadingMessage.classList.add('hidden');
+                }
+            };
+
+            // Function to render KPI reports in the table
+            const renderKpiReports = (reports) => {
+                if (reports.length === 0) {
+                    reportsListContainer.innerHTML = '<div class="text-center text-gray-500">មិនមានរបាយការណ៍ KPI ប្រចាំថ្ងៃត្រូវបានរកឃើញទេ។</div>';
+                    return;
+                }
+
+                let tableHtml = `
+                    <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    លេខសម្គាល់បុគ្គលិក
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ឈ្មោះបុគ្គលិក
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    តួនាទី
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ទំនាក់ទំនង
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ពិន្ទុ KPI សរុប
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                `;
+
+                reports.forEach(report => {
+                    tableHtml += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${report.employee_id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.employee_name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.employee_position}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.employee_contact}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${report.total_kpi_score}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `
+                        </tbody>
+                    </table>
+                `;
+                reportsListContainer.innerHTML = tableHtml;
+            };
+
+            // Handle Logout
+            const handleLogout = async () => {
+                modalTitle.textContent = 'បញ្ជាក់ការចេញពីប្រព័ន្ធ';
+                modalContent.innerHTML = 'តើអ្នកពិតជាចង់ចេញពីប្រព័ន្ធមែនទេ?';
+                const modalConfirmBtn = document.getElementById('modalConfirmBtn'); // Re-get the button if it's not globally available
+                if (modalConfirmBtn) modalConfirmBtn.classList.remove('hidden');
+                document.getElementById('modalCloseBtn').textContent = 'បោះបង់';
+                customModal.classList.remove('hidden');
+
+                if (modalConfirmBtn) {
+                    modalConfirmBtn.onclick = async () => {
+                        try {
+                            const response = await fetch(`${PHP_BASE_URL}logout.php`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                            const data = await response.json();
+
+                            if (data.success) {
+                                window.location.href = 'login.html';
+                            } else {
+                                showAlert('កំហុសការចេញពីប្រព័ន្ធ', data.message);
+                            }
+                        } catch (error) {
+                            console.error('Error during logout:', error);
+                            showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញពេលចេញពីប្រព័ន្ធ: ${error.message}`);
+                        } finally {
+                            customModal.classList.add('hidden');
+                        }
+                    };
+                }
+
+                document.getElementById('modalCloseBtn').onclick = () => {
+                    customModal.classList.add('hidden');
+                };
+            };
+
+            logoutBtn.addEventListener('click', handleLogout);
+
+            // Initial fetch of KPI reports when the page loads
+            fetchKpiReports();
+        });
+    </script>
+</body>
+</html>

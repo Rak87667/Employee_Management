@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ចូលប្រព័ន្ធ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0; /* Lighter background */
+        }
+        .login-container {
+            background-color: #ffffff;
+            border-radius: 2rem; /* More rounded corners */
+            overflow: hidden; /* Hide overflowing elements */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            max-width: 400px; /* Adjust max width */
+            width: 90%; /* Responsive width */
+            position: relative;
+        }
+        .header-bg {
+            background-color: #4CAF50; /* Green background */
+            height: 120px; /* Height for the top green section */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            clip-path: polygon(0 0, 100% 0, 100% 70%, 0 100%); /* Diagonal cut */
+            z-index: 1;
+        }
+        .header-bg-dark {
+            background-color: #388E3C; /* Darker green */
+            height: 120px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            clip-path: polygon(0 0, 100% 0, 100% 50%, 0 80%); /* Another diagonal cut */
+            z-index: 0;
+        }
+        .profile-icon-container {
+            position: absolute;
+            top: 60px; /* Adjust based on header height */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            background-color: #333; /* Dark background for icon */
+            border-radius: 50%;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .profile-icon {
+            color: #fff;
+            font-size: 3rem; /* Large icon */
+        }
+        .form-content {
+            padding: 8rem 2rem 2rem 2rem; /* Adjust padding to make space for header and icon */
+            position: relative;
+            z-index: 3; /* Ensure form content is above backgrounds */
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 0.75rem; /* Rounded input fields */
+            overflow: hidden;
+            background-color: #f9f9f9;
+            margin-bottom: 1rem;
+        }
+        .input-group i {
+            padding: 0.75rem 1rem;
+            background-color: #e0e0e0; /* Icon background */
+            color: #555;
+        }
+        .input-group input {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: none;
+            outline: none;
+            background-color: transparent;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .login-btn {
+            background-color: #4CAF50; /* Green button */
+            border-radius: 0.75rem; /* Rounded button */
+            padding: 0.75rem 1.5rem;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .login-btn:hover {
+            background-color: #388E3C; /* Darker green on hover */
+        }
+        .footer-bg {
+            background-color: #4CAF50; /* Green background */
+            height: 100px; /* Height for the bottom green section */
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            clip-path: polygon(0 30%, 100% 0, 100% 100%, 0% 100%); /* Diagonal cut from bottom */
+            z-index: 1;
+        }
+        .footer-bg-dark {
+            background-color: #388E3C; /* Darker green */
+            height: 100px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            clip-path: polygon(0 50%, 100% 20%, 100% 100%, 0% 100%); /* Another diagonal cut */
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="login-container">
+        <!-- Background shapes -->
+        <div class="header-bg-dark"></div>
+        <div class="header-bg"></div>
+        <div class="footer-bg-dark"></div>
+        <div class="footer-bg"></div>
+
+        <!-- Profile Icon -->
+        <div class="profile-icon-container">
+            <i class="fas fa-user profile-icon"></i>
+        </div>
+
+        <div class="form-content">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-2">
+                ចូលប្រព័ន្ធ
+            </h1>
+            
+            <form id="loginForm" class="space-y-4 mt-8">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+                        User Name
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            required
+                            class="w-full"
+                            placeholder="Enter username"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            class="w-full"
+                            placeholder="Enter password"
+                        />
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-sm text-gray-600">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="text-blue-600 hover:underline">Forgot Password?</a>
+                </div>
+                <button
+                    type="submit"
+                    id="loginBtn"
+                    class="w-full login-btn"
+                >
+                    LOGIN
+                </button>
+            </form>
+        </div>
+
+        <!-- Custom Modal for Alerts -->
+        <div id="customModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800 mb-4"></h3>
+                <div id="modalContent" class="prose max-w-none text-gray-700 leading-relaxed mb-6"></div>
+                <div class="flex justify-end">
+                    <button id="modalCloseBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">បិទ</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const loginForm = document.getElementById('loginForm');
+                const usernameInput = document.getElementById('username');
+                const passwordInput = document.getElementById('password');
+                const loginBtn = document.getElementById('loginBtn');
+
+                // Custom Modal Elements
+                const customModal = document.getElementById('customModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const modalContent = document.getElementById('modalContent');
+                const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+                const PHP_BASE_URL = 'http://localhost/employee_app/php/';
+
+                // Function to show custom alert modal
+                function showAlert(title, message) {
+                    modalTitle.textContent = title;
+                    modalContent.innerHTML = message;
+                    customModal.classList.remove('hidden');
+                }
+
+                // Event listener for modal close button
+                modalCloseBtn.addEventListener('click', () => {
+                    customModal.classList.add('hidden');
+                });
+
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const username = usernameInput.value;
+                    const password = passwordInput.value;
+
+                    loginBtn.disabled = true;
+                    loginBtn.textContent = 'កំពុងចូលប្រព័ន្ធ...';
+
+                    try {
+                        const response = await fetch(`${PHP_BASE_URL}login.php`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('HTTP Error during login:', response.status, response.statusText, errorText);
+                            showAlert('កំហុស', `មានបញ្ហាបណ្តាញ: ${response.status} ${response.statusText}`);
+                            return;
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Check if a redirect URL is provided in the response from login.php
+                            if (data.redirect) {
+                                window.location.href = data.redirect; // Redirect to the specified page
+                            } else {
+                                // Fallback if no redirect is specified (should not happen with updated PHP)
+                                window.location.href = 'index.html';
+                            }
+                        } else {
+                            showAlert('កំហុសការចូលប្រព័ន្ធ', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error during login (network or parsing):', error);
+                        showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។ សូមពិនិត្យមើល WampServer របស់អ្នក។`);
+                    } finally {
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'ចូលប្រព័ន្ធ';
+                    }
+                });
+            });
+        </script>
+    </body>
+    </html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>របាយការណ៍ KPI ប្រចាំថ្ងៃរបស់ខ្ញុំ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            padding: 2rem;
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .task-checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .task-card {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .task-card label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        .task-card input[type="checkbox"] {
+            margin-right: 0.5rem;
+            border-radius: 0.25rem;
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-4xl w-full bg-white shadow-lg rounded-xl p-8 space-y-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 text-center flex-grow">
+                របាយការណ៍ KPI ប្រចាំថ្ងៃរបស់ខ្ញុំ
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span id="loggedInUser" class="text-gray-600 text-sm"></span>
+                <button
+                    id="logoutBtn"
+                    class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out"
+                >
+                    ចេញពីប្រព័ន្ធ
+                </button>
+            </div>
+        </div>
+
+        <div id="employeeInfo" class="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
+            <p class="text-lg font-semibold text-gray-800 mb-2">
+                ឈ្មោះបុគ្គលិក: <span id="employeeName" class="font-normal"></span>
+            </p>
+            <p class="text-sm text-gray-700">
+                តួនាទី: <span id="employeePosition"></span>
+            </p>
+            <p class="text-sm text-gray-700">
+                នាយកដ្ឋាន: <span id="employeeDepartment"></span>
+            </p>
+        </div>
+
+        <div id="loadingMessage" class="text-center text-gray-500 mt-4">
+            កំពុងផ្ទុកព័ត៌មានបុគ្គលិក...
+        </div>
+        <div id="errorMessage" class="text-center text-red-500 mt-4 hidden">
+            មិនអាចផ្ទុកព័ត៌មានបុគ្គលិកបានទេ។ សូមប្រាកដថាអ្នកត្រូវបានភ្ជាប់ទៅគណនីបុគ្គលិក។
+        </div>
+
+        <form id="kpiReportForm" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="reportDate" class="block text-sm font-medium text-gray-700 mb-1">
+                        កាលបរិច្ឆេទរបាយការណ៍:
+                    </label>
+                    <input
+                        type="date"
+                        id="reportDate"
+                        name="reportDate"
+                        required
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label for="issueDescription" class="block text-sm font-medium text-gray-700 mb-1">
+                        ការពិពណ៌នាបញ្ហា (ប្រសិនបើមាន):
+                    </label>
+                    <textarea
+                        id="issueDescription"
+                        name="issueDescription"
+                        rows="3"
+                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="បញ្ចូលការពិពណ៌នាបញ្ហា..."
+                    ></textarea>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-4">
+                កិច្ចការដែលបានអនុវត្ត៖
+            </h3>
+            <div class="task-checkbox-group">
+                <!-- ATM Machine Tasks -->
+                <div class="task-card">
+                    <h4 class="font-semibold text-gray-800 mb-2">ATM Machine (3 ពិន្ទុ)</h4>
+                    <label><input type="checkbox" name="task" value="ATM Machine: Check and refill cash/receipts"> ត្រួតពិនិត្យ និងបញ្ចូលលុយ/បង្កាន់ដៃ</label>
+                    <label><input type="checkbox" name="task" value="ATM Machine: Synchronize: Check/update software"> ធ្វើសមកាលកម្ម: ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Software</label>
+                    <label><input type="checkbox" name="task" value="ATM Machine: Check/update hardware"> ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Hardware</label>
+                    <label><input type="checkbox" name="task" value="ATM Machine: Troubleshoot/repair ATM"> ដោះស្រាយបញ្ហា/ជួសជុល ATM</label>
+                    <label><input type="checkbox" name="task" value="ATM Machine: Double Pick: Check/repair"> Double Pick: ត្រួតពិនិត្យ/ជួសជុល</label>
+                    <label><input type="checkbox" name="task" value="ATM Machine: Other ATM tasks"> កិច្ចការ ATM ផ្សេងទៀត</label>
+                </div>
+
+                <!-- CRM Machine Tasks -->
+                <div class="task-card">
+                    <h4 class="font-semibold text-gray-800 mb-2">CRM Machine (3 ពិន្ទុ)</h4>
+                    <label><input type="checkbox" name="task" value="CRM Machine: Check and refill cash/receipts"> ត្រួតពិនិត្យ និងបញ្ចូលលុយ/បង្កាន់ដៃ</label>
+                    <label><input type="checkbox" name="task" value="CRM Machine: Synchronize: Check/update software"> ធ្វើសមកាលកម្ម: ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Software</label>
+                    <label><input type="checkbox" name="task" value="CRM Machine: Check/update hardware"> ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Hardware</label>
+                    <label><input type="checkbox" name="task" value="CRM Machine: Troubleshoot/repair CRM"> ដោះស្រាយបញ្ហា/ជួសជុល CRM</label>
+                    <label><input type="checkbox" name="task" value="CRM Machine: Other CRM tasks"> កិច្ចការ CRM ផ្សេងទៀត</label>
+                </div>
+
+                <!-- CIM Machine Tasks -->
+                <div class="task-card">
+                    <h4 class="font-semibold text-gray-800 mb-2">CIM Machine (2 ពិន្ទុ)</h4>
+                    <label><input type="checkbox" name="task" value="CIM Machine: Check and refill cash/receipts"> ត្រួតពិនិត្យ និងបញ្ចូលលុយ/បង្កាន់ដៃ</label>
+                    <label><input type="checkbox" name="task" value="CIM Machine: Synchronize: Check/update software"> ធ្វើសមកាលកម្ម: ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Software</label>
+                    <label><input type="checkbox" name="task" value="CIM Machine: CIM Collect Cash"> CIM Collect Cash</label>
+                    <label><input type="checkbox" name="task" value="CIM Machine: Other CIM tasks"> កិច្ចការ CIM ផ្សេងទៀត</label>
+                </div>
+
+                <!-- CDM Machine Tasks -->
+                <div class="task-card">
+                    <h4 class="font-semibold text-gray-800 mb-2">CDM Machine (2 ពិន្ទុ)</h4>
+                    <label><input type="checkbox" name="task" value="CDM Machine: Check and refill cash/receipts"> ត្រួតពិនិត្យ និងបញ្ចូលលុយ/បង្កាន់ដៃ</label>
+                    <label><input type="checkbox" name="task" value="CDM Machine: Synchronize: Check/update software"> ធ្វើសមកាលកម្ម: ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Software</label>
+                    <label><input type="checkbox" name="task" value="CDM Machine: Other CDM tasks"> កិច្ចការ CDM ផ្សេងទៀត</label>
+                </div>
+
+                <!-- CEM Machine Tasks -->
+                <div class="task-card">
+                    <h4 class="font-semibold text-gray-800 mb-2">CEM Machine (2 ពិន្ទុ)</h4>
+                    <label><input type="checkbox" name="task" value="CEM Machine: Check and refill cash/receipts"> ត្រួតពិនិត្យ និងបញ្ចូលលុយ/បង្កាន់ដៃ</label>
+                    <label><input type="checkbox" name="task" value="CEM Machine: Synchronize: Check/update software"> ធ្វើសមកាលកម្ម: ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Software</label>
+                    <label><input type="checkbox" name="task" value="CEM Machine: Other CEM tasks"> កិច្ចការ CEM ផ្សេងទៀត</label>
+                </div>
+
+                <!-- CCM Machine Tasks -->
+                <div class="task-card">
+                    <h4 class="font-semibold text-gray-800 mb-2">CCM Machine (2 ពិន្ទុ)</h4>
+                    <label><input type="checkbox" name="task" value="CCM Machine: Check and refill cash/receipts"> ត្រួតពិនិត្យ និងបញ្ចូលលុយ/បង្កាន់ដៃ</label>
+                    <label><input type="checkbox" name="task" value="CCM Machine: Synchronize: Check/update software"> ធ្វើសមកាលកម្ម: ត្រួតពិនិត្យ/ធ្វើបច្ចុប្បន្នភាព Software</label>
+                    <label><input type="checkbox" name="task" value="CCM Machine: Other CCM tasks"> កិច្ចការ CCM ផ្សេងទៀត</label>
+                </div>
+            </div>
+
+            <p class="text-xl font-bold text-gray-800 mt-6">
+                ពិន្ទុ KPI ប្រចាំថ្ងៃបានគណនា: <span id="calculatedKpiScore">0</span>
+            </p>
+
+            <button
+                type="submit"
+                id="saveKpiReportBtn"
+                class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+            >
+                រក្សាទុករបាយការណ៍ KPI
+            </button>
+        </form>
+
+        <!-- Custom Modal for Alerts -->
+        <div id="customModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800 mb-4"></h3>
+                <div id="modalContent" class="prose max-w-none text-gray-700 leading-relaxed mb-6"></div>
+                <div class="flex justify-end space-x-2">
+                    <button id="modalCloseBtn" class="py-2 px-4 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out">បិទ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const employeeInfoDiv = document.getElementById('employeeInfo');
+            const employeeNameSpan = document.getElementById('employeeName');
+            const employeePositionSpan = document.getElementById('employeePosition');
+            const employeeDepartmentSpan = document.getElementById('employeeDepartment');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const kpiReportForm = document.getElementById('kpiReportForm');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loggedInUserSpan = document.getElementById('loggedInUser');
+
+            const reportDateInput = document.getElementById('reportDate');
+            const issueDescriptionInput = document.getElementById('issueDescription');
+            const taskCheckboxes = document.querySelectorAll('input[name="task"]');
+            const calculatedKpiScoreSpan = document.getElementById('calculatedKpiScore');
+            const saveKpiReportBtn = document.getElementById('saveKpiReportBtn');
+
+            // Custom Modal Elements
+            const customModal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+            let employeeId = null; // To store the employee ID fetched from the backend
+
+            const PHP_BASE_URL = 'http://localhost/employee_app/php/';
+
+            // Function to show custom alert modal
+            function showAlert(title, message) {
+                modalTitle.textContent = title;
+                modalContent.innerHTML = message;
+                customModal.classList.remove('hidden');
+            }
+
+            // Event listener for modal close button
+            modalCloseBtn.addEventListener('click', () => {
+                customModal.classList.add('hidden');
+            });
+
+            // Function to fetch employee details for the logged-in user
+            const fetchEmployeeDetails = async () => {
+                loadingMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                employeeInfoDiv.classList.add('hidden');
+                kpiReportForm.classList.add('hidden');
+
+                try {
+                    const authResponse = await fetch(`${PHP_BASE_URL}check_auth.php`);
+                    const authData = await authResponse.json();
+
+                    if (!authData.authenticated) {
+                        window.location.href = 'login.html'; // Redirect to login if not authenticated
+                        return;
+                    }
+
+                    loggedInUserSpan.textContent = `អ្នកប្រើប្រាស់: ${authData.username} (${authData.role})`;
+
+                    // Fetch employee details using the logged-in user's ID
+                    const employeeResponse = await fetch(`${PHP_BASE_URL}get_employee_by_user_id.php`);
+                    const employeeData = await employeeResponse.json();
+
+                    if (employeeData.success && employeeData.employee) {
+                        employeeId = employeeData.employee.id; // Store employee ID
+                        employeeNameSpan.textContent = employeeData.employee.name;
+                        employeePositionSpan.textContent = employeeData.employee.position;
+                        employeeDepartmentSpan.textContent = employeeData.employee.department;
+                        employeeInfoDiv.classList.remove('hidden');
+                        kpiReportForm.classList.remove('hidden');
+                    } else {
+                        errorMessage.classList.remove('hidden');
+                        showAlert('កំហុស', employeeData.message || 'មិនអាចផ្ទុកព័ត៌មានបុគ្គលិកបានទេ។');
+                    }
+                } catch (error) {
+                    console.error('Error fetching employee details:', error);
+                    errorMessage.classList.remove('hidden');
+                    showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។ សូមពិនិត្យមើល WampServer របស់អ្នក។`);
+                } finally {
+                    loadingMessage.classList.add('hidden');
+                }
+            };
+
+            // Calculate KPI Score
+            const calculateKpiScore = () => {
+                let score = 0;
+                taskCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        const taskValue = checkbox.value;
+                        if (taskValue.includes('ATM Machine') || taskValue.includes('CRM Machine')) {
+                            score += 3;
+                        } else if (taskValue.includes('CIM Machine') || taskValue.includes('CDM Machine') || taskValue.includes('CEM Machine') || taskValue.includes('CCM Machine')) {
+                            score += 2;
+                        }
+                    }
+                });
+                calculatedKpiScoreSpan.textContent = score;
+            };
+
+            // Event listener for task checkboxes
+            taskCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', calculateKpiScore);
+            });
+
+            // Handle KPI Report Form Submission
+            kpiReportForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if (!employeeId) {
+                    showAlert('កំហុស', 'មិនអាចរកឃើញលេខសម្គាល់បុគ្គលិកទេ។ សូមផ្ទុកទំព័រឡើងវិញ។');
+                    return;
+                }
+
+                const reportDate = reportDateInput.value;
+                const issueDescription = issueDescriptionInput.value;
+                const completedTasks = Array.from(taskCheckboxes)
+                                            .filter(cb => cb.checked)
+                                            .map(cb => cb.value);
+                const kpiScore = parseInt(calculatedKpiScoreSpan.textContent);
+
+                if (!reportDate) {
+                    showAlert('កំហុស', 'សូមជ្រើសរើសកាលបរិច្ឆេទរបាយការណ៍។');
+                    return;
+                }
+                if (completedTasks.length === 0 && !issueDescription) {
+                    showAlert('កំហុស', 'សូមជ្រើសរើសកិច្ចការដែលបានអនុវត្ត ឬបញ្ចូលការពិពណ៌នាបញ្ហា។');
+                    return;
+                }
+
+                saveKpiReportBtn.disabled = true;
+                saveKpiReportBtn.textContent = 'កំពុងរក្សាទុក...';
+
+                try {
+                    const response = await fetch(`${PHP_BASE_URL}add_daily_kpi_report.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            employee_id: employeeId,
+                            report_date: reportDate,
+                            tasks_completed: completedTasks, // Changed from completed_tasks to tasks_completed
+                            kpi_score: kpiScore,
+                            problem_description: issueDescription // Changed from issue_description to problem_description
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('HTTP Error saving KPI report:', response.status, response.statusText, errorText);
+                        showAlert('កំហុស', `មានបញ្ហាក្នុងការរក្សាទុករបាយការណ៍ KPI។ HTTP Error: ${response.status} ${response.statusText}`);
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showAlert('ជោគជ័យ', data.message);
+                        kpiReportForm.reset(); // Clear the form
+                        calculateKpiScore(); // Reset score
+                    } else {
+                        showAlert('កំហុស', data.message || 'មិនអាចរក្សាទុករបាយការណ៍ KPI បានទេ។');
+                    }
+                } catch (error) {
+                    console.error('Error saving KPI report (network or parsing):', error);
+                    showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញ: ${error.message}។`);
+                } finally {
+                    saveKpiReportBtn.disabled = false;
+                    saveKpiReportBtn.textContent = 'រក្សាទុករបាយការណ៍ KPI';
+                }
+            });
+
+            // Handle Logout
+            const handleLogout = async () => {
+                // Using custom modal for confirmation
+                modalTitle.textContent = 'បញ្ជាក់ការចេញពីប្រព័ន្ធ';
+                modalContent.innerHTML = 'តើអ្នកពិតជាចង់ចេញពីប្រព័ន្ធមែនទេ?';
+                modalConfirmBtn.classList.remove('hidden');
+                modalCloseBtn.textContent = 'បោះបង់';
+                customModal.classList.remove('hidden');
+
+                // Set up the confirmation callback
+                document.getElementById('modalConfirmBtn').onclick = async () => {
+                    try {
+                        const response = await fetch(`${PHP_BASE_URL}logout.php`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            window.location.href = 'login.html'; // Redirect to login page after logout
+                        } else {
+                            showAlert('កំហុសការចេញពីប្រព័ន្ធ', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error during logout:', error);
+                        showAlert('កំហុសបណ្តាញ', `មានបញ្ហាបណ្តាញពេលចេញពីប្រព័ន្ធ: ${error.message}`);
+                    } finally {
+                        customModal.classList.add('hidden'); // Hide modal after action
+                    }
+                };
+
+                document.getElementById('modalCloseBtn').onclick = () => {
+                    customModal.classList.add('hidden'); // Hide modal if cancelled
+                };
+            };
+
+            logoutBtn.addEventListener('click', handleLogout);
+
+            // Initial fetch of employee details when the page loads
+            fetchEmployeeDetails();
+        });
+    </script>
+</body>
+</html>
